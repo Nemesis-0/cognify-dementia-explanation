@@ -10,12 +10,12 @@ Developed for **CognifyChallenge 2026**, a multidisciplinary AI competition host
 
 The underlying model was a LightGBM classifier for dementia screening. Rather than retraining or replacing the classifier, this project focused on a different question:
 
-> **How can a language model faithfully communicate why a predictive model made a decision, while remaining grounded in the available patient record?**
+> **How can a language model faithfully communicate why a predictive model made a decision while remaining grounded in the available patient record?**
 
 For each case, the explanation agent received:
 
 - a patient record,
-- the classifier's verdict and calibrated dementia probability,
+- the classifier's verdict and model probability,
 - a confidence category,
 - record-supported field values, and
 - ranked feature attributions indicating whether each feature increased or decreased the model estimate.
@@ -31,7 +31,7 @@ The final system used **Qwen2.5-7B-Instruct**, 4-bit inference, deterministic de
 
 ## Why This Was a Challenging Explanation Problem
 
-A good explanation had to satisfy several objectives simultaneously.
+A useful explanation had to satisfy several objectives simultaneously.
 
 It needed to be:
 
@@ -46,7 +46,7 @@ The official evaluation combined these objectives as:
 
 This created a genuine multi-objective design problem.
 
-For example, adding more patient information could improve reader comprehension while simultaneously introducing irrelevant lexical variation that reduced sensitivity. The goal was therefore not simply to produce longer or more fluent explanations, but to determine **which information should be transmitted and how it should be represented**.
+For example, adding more patient information could improve reader comprehension while simultaneously introducing lexical variation that reduced sensitivity. The goal was therefore not simply to produce longer or more fluent explanations, but to determine **which information should be transmitted and how it should be represented**.
 
 ---
 
@@ -57,7 +57,7 @@ The final system retained a simple and conservative core:
 - exact top-five attribution drivers,
 - exact attribution directions,
 - record-supported values only,
-- calibrated prediction and confidence information,
+- model probability and confidence information,
 - concise natural-language explanation, and
 - a compact channel for explicitly absent findings.
 
@@ -92,7 +92,9 @@ The submitted configuration is available at:
 
 A major focus of the project was preventing development results from becoming a substitute for genuine generalization.
 
-The workflow therefore used several safeguards:
+Model, prompt, few-shot, and representation decisions were made using development data rather than competition test outcomes.
+
+The workflow used several safeguards:
 
 - **Development-only model selection:** competition test outcomes were not used for prompt or architecture selection.
 - **Frozen development subsets:** important comparisons were performed on deterministic subsets selected before generation.
@@ -121,11 +123,11 @@ The initial strong baseline achieved excellent grounding and attribution faithfu
 
 ### 2. Identifying the missing information
 
-Question-level analysis showed that many comprehension errors involved **findings explicitly reported as absent in the record**.
+Question-level error analysis showed that an important source of comprehension failure involved **findings explicitly reported as absent in the record**.
 
-These findings often mattered to the reader but were not among the classifier's top five attributed drivers, so a purely attribution-centered explanation systematically omitted them.
+Many of these findings were available in the record but were not among the classifier's top five attributed drivers. A purely attribution-centered explanation therefore omitted information that could still matter to a downstream reader.
 
-### 3. Naïve solution: transmit all absence information
+### 3. Naïve solution: transmit broad absence information
 
 Adding broad absence information substantially improved comprehension, but the additional patient-specific vocabulary caused sensitivity to deteriorate.
 
@@ -145,9 +147,21 @@ Several structured alternatives were tested to separate semantic information fro
 
 A structured state representation reached a synthetic composite of approximately **0.874**, but proved too difficult for the constrained generator to execute reliably.
 
-The final solution therefore used a simpler representation: explicit absent findings were transmitted in a compact hyphen-connected sequence while the original attribution explanation remained unchanged.
+A more compact representation was then tested in which explicit absent findings were transmitted as a hyphen-connected sequence while the original attribution explanation remained unchanged.
 
-This preserved most of the comprehension benefit without sacrificing the stability of the core generator.
+One synthetic screen of the compact representation reached approximately:
+
+| Metric | Compact representation screen |
+|---|---:|
+| Grounding | 1.000 |
+| Faithfulness | 0.969 |
+| Comprehension | 0.917 |
+| Sensitivity | 0.677 |
+| Composite | 0.880 |
+
+These synthetic screens were used to study information representation. They were not treated as substitutes for real-generator validation.
+
+The final solution retained the simpler compact absence channel without the additional structured components that made earlier variants more difficult to generate reliably.
 
 ---
 
@@ -166,13 +180,22 @@ The final architecture was evaluated using actual Qwen2.5-7B generation on a 50-
 
 All **50/50 cases produced usable outputs**.
 
-Relative to the baseline, the final representation substantially improved comprehension while preserving grounding, attribution fidelity, and sensitivity.
+Relative to the baseline:
+
+- grounding remained essentially perfect,
+- faithfulness did not decline,
+- sensitivity remained near the baseline level, and
+- comprehension increased materially.
+
+This represented a favorable multi-objective trade-off: the primary comprehension weakness improved without materially sacrificing the system's strongest dimensions.
+
+The architecture was then frozen for final submission.
 
 ---
 
 ## Organizer-Held-Out Test Result
 
-The submitted system was subsequently evaluated by the competition organizers on held-out test cases that were not used for model or representation selection.
+The frozen system was subsequently evaluated by the competition organizers on held-out test cases that were not used for model or representation selection.
 
 | Metric | Organizer-held-out test |
 |---|---:|
@@ -185,7 +208,7 @@ The submitted system was subsequently evaluated by the competition organizers on
 
 The submission ranked **12th among 33 valid entries**.
 
-The similarity between development and organizer-held-out results was particularly informative:
+The similarity between the final development benchmark and organizer-held-out evaluation was particularly informative:
 
 | Metric | Development | Held-out test |
 |---|---:|---:|
@@ -195,7 +218,9 @@ The similarity between development and organizer-held-out results was particular
 | Sensitivity | 0.624 | 0.625 |
 | Composite | 0.826 | 0.809 |
 
-The relatively small shift between development and held-out performance provided external evidence that the final validation strategy and representation generalized beyond the development cases.
+Grounding, faithfulness, and sensitivity remained close to their development values, while comprehension showed a moderate decline.
+
+The relatively small overall shift provided external evidence that the selected representation was not narrowly specific to the development benchmark.
 
 ---
 
@@ -207,15 +232,19 @@ The goal was deliberately narrow:
 
 > Could a newer base model execute the already-developed system more reliably without model-specific prompt tuning?
 
-Qwen3-8B successfully generated structured outputs, but stress testing revealed systematic false-absence errors. In several cases, findings that were unrecorded — and occasionally findings that were explicitly present — were incorrectly placed in the absence channel.
+Qwen3-8B successfully loaded under the available hardware configuration and produced structured outputs.
 
-Because the task strongly rewarded conservative evidence fidelity, the challenger was rejected under a pre-specified stopping rule rather than retuned.
+However, stress testing revealed a systematic failure mode: findings that were **not recorded**, and in some cases findings that were explicitly **present**, were incorrectly placed in the absence channel.
+
+At least five of eight stress cases exhibited false-absence behavior, and one case also contained a driver-grounding contradiction.
+
+Because this comparison was intended to test the base model rather than reopen model-specific prompt optimization, the challenger was terminated according to the pre-specified stopping rule.
 
 This reinforced an important lesson:
 
 > **Greater general language-model capability does not necessarily imply better performance on a constrained evidence-transmission task.**
 
-For this application, predictable extraction and exact evidence handling were more important than additional generative flexibility.
+For this application, predictable extraction and conservative evidence handling were more important than additional generative flexibility.
 
 ---
 
@@ -223,7 +252,7 @@ For this application, predictable extraction and exact evidence handling were mo
 
 ### Explanation quality is multidimensional
 
-A model explanation can be perfectly grounded and faithful while still failing to transmit enough information for a downstream reader.
+A model explanation can be highly grounded and faithful while still failing to transmit enough information for a downstream reader.
 
 ### Error analysis can matter more than aggregate optimization
 
@@ -235,15 +264,17 @@ Adding useful information did not automatically improve the overall system. The 
 
 ### Synthetic improvements must survive deployment
 
-Several offline representations achieved stronger synthetic scores than the final system but could not be generated reliably under the 16 GB inference constraint.
+Several offline transformations achieved stronger synthetic scores than the final system but required operations that the constrained generator could not reliably perform.
 
 Operational reliability was therefore treated as part of model quality.
 
-### Simpler systems can generalize better
+### The final architecture favored simplicity and deployment reliability
 
-The final system was substantially simpler than several intermediate architectures.
+Development explored several increasingly structured representations, but the final system returned to a comparatively simple design.
 
-It preserved the stable attribution-explanation core and added only the additional information channel required to address the dominant comprehension failure mode.
+It preserved the stable attribution-explanation core, added only the additional information channel required to address the dominant comprehension weakness, and avoided formatting tasks that increased generator failure risk.
+
+The organizer-held-out evaluation subsequently showed performance close to the final development benchmark.
 
 ---
 
@@ -267,17 +298,19 @@ The final Qwen2.5-7B configuration submitted to the competition, including infer
 
 ### `docs/methodology_and_ablations.md`
 
-A more detailed account of the validation strategy, failure analysis, intermediate representations, deployment constraints, ablations, and final held-out evaluation.
+A detailed account of the validation strategy, failure analysis, intermediate representations, deployment constraints, ablations, base-model challenge, and organizer-held-out evaluation.
 
 ---
 
 ## Reproducibility and Data Availability
 
-This repository is intended to document the **system design, validation methodology, and final configuration** developed for the project.
+This repository is intended to document the **system design, validation methodology, final configuration, and major development findings** of the project.
 
 Competition test cases are not included.
 
-The repository also does not attempt to redistribute the complete organizer-provided evaluation environment. Instead, it focuses on the components authored and selected during development.
+The repository does not attempt to redistribute the complete organizer-provided evaluation environment. Instead, it focuses on the components authored and selected during development.
+
+Synthetic-screen results are explicitly distinguished from real-generator development results and organizer-held-out evaluation.
 
 The reported held-out metrics are the results returned by the competition's organizer-side evaluation.
 
@@ -294,7 +327,8 @@ The reported held-out metrics are the results returned by the competition's orga
 | Model evidence | Top 5 feature attributions |
 | Explanation strategy | Grounded attribution explanation + compact explicit-absence channel |
 | GPU constraint | <16 GB VRAM |
-| Official held-out composite | **0.8091** |
+| Development composite | **0.826** |
+| Organizer-held-out composite | **0.8091** |
 
 ---
 
@@ -309,8 +343,9 @@ The project should be interpreted as a study in:
 - interpretable machine learning,
 - evidence-grounded language generation,
 - model evaluation,
-- validation design, and
-- information representation under computational constraints.
+- validation design,
+- information representation, and
+- reliable LLM inference under computational constraints.
 
 ---
 

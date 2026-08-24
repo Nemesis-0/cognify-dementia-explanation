@@ -11,7 +11,7 @@ The objective was not to improve the underlying classifier or diagnose patients.
 - comprehension by a reader who sees only the generated explanation, and
 - sensitivity of explanations to differences in model evidence.
 
-Development followed a clean-room, development-only workflow. Model, prompt, few-shot, and representation decisions were made using development data rather than competition test outcomes. Development subsets were frozen before targeted comparisons; once a subset had been inspected or used to guide design, it was treated as development data rather than as an untouched validation set.
+Development followed a development-only model-selection workflow. Model, prompt, few-shot, and representation decisions were made using development data rather than competition test outcomes. Development subsets were frozen before targeted comparisons; once a subset had been inspected or used to guide design, it was treated as development data rather than as an untouched validation set.
 
 The final system used Qwen2.5-7B-Instruct with 4-bit inference, two few-shot examples, and five model attributions per case.
 
@@ -23,7 +23,7 @@ The underlying LightGBM model produced a dementia-screening prediction together 
 
 - a short patient record,
 - record-supported fields and values,
-- the classifier's verdict and calibrated probability,
+- the classifier's verdict and model probability,
 - a confidence category, and
 - ranked model attributions with directions indicating whether each feature increased or decreased the model estimate.
 
@@ -32,7 +32,7 @@ The generated output contained two components:
 1. a short explanatory note intended for a reader who had not seen the original model inputs, and
 2. a structured list of model drivers with field names, values when supported by the record, and attribution directions.
 
-The task therefore required more than producing fluent clinical prose. A useful explanation had to communicate sufficient information for downstream understanding while remaining exactly aligned with the fitted model and with evidence present in the patient record.
+The task therefore required more than producing fluent clinical prose. A useful explanation had to communicate sufficient information for downstream understanding while remaining aligned with the fitted model and with evidence present in the patient record.
 
 ---
 
@@ -63,11 +63,11 @@ Several principles were used throughout the project.
 
 ### Development-only optimization
 
-Prompt design, few-shot selection, attribution count, representation design, and model comparisons were performed using development cases only. Competition test outcomes were not used for model or prompt selection.
+Prompt design, few-shot selection, attribution count, representation design, and model comparisons were performed using development cases. Competition test outcomes were not used for model or prompt selection.
 
 ### Frozen comparison subsets
 
-For major architecture comparisons, a deterministic subset of development cases was selected before generation. Important case characteristics included:
+For major architecture comparisons, deterministic subsets of development cases were selected before generation. Relevant case characteristics included:
 
 - confidence category,
 - record length,
@@ -91,7 +91,7 @@ Several unsuccessful branches were terminated rather than repeatedly tuned. Exam
 - representations that produced large sensitivity losses, and
 - model challengers that systematically inferred absent findings not explicitly supported by the record.
 
-This was important because the final system had to run reliably under the organizer's fixed inference environment rather than only produce high offline scores.
+This was important because the final system had to run reliably under the competition's fixed deployment constraints rather than only produce strong offline scores.
 
 ---
 
@@ -108,7 +108,7 @@ Its main design choices were:
 - the top five model attributions,
 - exact copying of driver identity and direction,
 - record-supported values only, and
-- short prose describing the verdict, probability, confidence category, and five model drivers.
+- short prose describing the verdict, model probability, confidence category, and five model drivers.
 
 On a 50-case development benchmark, this system achieved approximately:
 
@@ -128,11 +128,11 @@ This motivated a focused analysis of what information the generated note failed 
 
 ## Identifying the Comprehension Bottleneck
 
-Question-level analysis showed that the largest weakness involved **explicitly absent findings**.
+Question-level error analysis showed that an important source of comprehension failure involved **explicitly absent findings**.
 
-For many absence-related questions, the relevant information was available in the patient record but was not among the model's top five attributions. Because the baseline note concentrated almost entirely on the top model drivers, this broader record information was usually omitted.
+For many absence-related questions, the relevant information was available in the patient record but was not among the model's top five attributions. Because the baseline note concentrated almost entirely on the top model drivers, this broader record information was often omitted.
 
-A development audit found that nearly all absence-question answers were supported somewhere in the record or citable field set, while essentially none of them appeared among the top model attributions.
+Development error analysis indicated that many absence-question answers were supported by the record or citable fields but were not represented among the top model attributions.
 
 This revealed a structural mismatch:
 
@@ -144,7 +144,7 @@ The resulting hypothesis was that the explanation required a second, compact **r
 
 ## Ablation 1: Adding Full Absence Information
 
-The first experiment appended all explicit absent or zero-valued findings to the baseline note.
+The first experiment appended explicit absent or zero-valued findings to the baseline note.
 
 This substantially improved reader comprehension:
 
@@ -164,7 +164,7 @@ The reason was representational rather than informational. A conventional Englis
 
 This experiment established the central design problem:
 
-> The system needed to transmit broad patient-state information to the reader without allowing that information to dominate the lexical geometry used for sensitivity scoring.
+> The system needed to transmit broader patient-state information to the reader without allowing that information to dominate the lexical geometry used for sensitivity scoring.
 
 ---
 
@@ -196,7 +196,7 @@ The fixed-state architecture was therefore treated as an informative upper-bound
 
 ---
 
-## Ablation 3: Compact Mega-Token Representation
+## Ablation 3: Compact Absence Representation
 
 The next representation compressed explicit absent findings into a single hyphen-connected sequence, for example:
 
@@ -221,7 +221,7 @@ A synthetic screen with additional top-driver anchors achieved approximately:
 | Sensitivity | 0.677 |
 | Composite | 0.880 |
 
-Additional experiments showed that the extra top-driver anchors were not necessary for most of the improvement. Removing them reduced complexity and decreased the risk of corrupting exact field names.
+Additional experiments suggested that the extra top-driver anchors were not necessary for most of the improvement. Removing them reduced complexity and decreased the risk of corrupting exact field names.
 
 The final design therefore retained only:
 
@@ -251,20 +251,20 @@ The result was:
 
 All 50 cases produced usable outputs.
 
-The key result was the shape of the improvement. Relative to the baseline:
+Relative to the baseline:
 
 - grounding remained essentially perfect,
 - faithfulness did not decline,
 - sensitivity remained near the baseline level, and
 - comprehension increased materially.
 
-This was the desired Pareto improvement.
+This represented a favorable multi-objective trade-off: the primary comprehension weakness improved without materially sacrificing the system's strongest dimensions.
 
 The final architecture was therefore frozen as:
 
 > **Qwen2.5-7B + 4-bit inference + two few-shot examples + five model attributions + compact explicit-absence channel**
 
-No additional scorer-specific structures were added after this point.
+No additional representation changes were introduced after the final architecture was selected.
 
 ---
 
@@ -282,7 +282,7 @@ The challenger could:
 
 However, on a small stress-oriented development screen, it systematically made a type of error that was especially harmful for this task: it placed findings that were **not recorded**, and in some cases findings that were explicitly **present**, into the absence channel.
 
-At least five of eight stress cases exhibited false-absence behavior, and one case also contained a true driver-grounding contradiction.
+At least five of eight stress cases exhibited false-absence behavior, and one case also contained a driver-grounding contradiction.
 
 Because the comparison was intended to test only the base model rather than retune the architecture for the challenger, the Qwen3 branch was terminated according to the pre-specified stopping rule.
 
@@ -296,7 +296,7 @@ Qwen2.5-7B was therefore retained for the final submission.
 
 ## Organizer Held-Out Results
 
-After submission, the organizers evaluated the frozen system on the competition test data.
+After the final submission was frozen, the organizers evaluated the system on the competition's held-out test set.
 
 The official result was:
 
@@ -323,7 +323,7 @@ The most informative result was not the rank alone, but the consistency between 
 
 Grounding, faithfulness, and sensitivity remained close to their development values, while comprehension showed a moderate decline.
 
-The held-out result therefore suggested that the final representation generalized substantially better than would be expected from a purely development-specific scoring artifact.
+The relatively small shift between the final development benchmark and organizer-held-out evaluation provided external evidence that the selected representation was not narrowly specific to the development cases.
 
 ---
 
@@ -333,11 +333,11 @@ The project produced several methodological lessons.
 
 ### 1. Explanation quality is multi-dimensional
 
-A note can be perfectly grounded and faithful to a predictive model while still failing to transmit enough information for a downstream reader.
+A note can be highly grounded and faithful to a predictive model while still failing to transmit enough information for a downstream reader.
 
 ### 2. More information is not automatically better
 
-Adding clinically relevant record information improved comprehension, but a naïve representation damaged another evaluation objective.
+Adding record-supported information improved comprehension, but a naïve representation damaged another evaluation objective.
 
 The representation of information mattered almost as much as the information itself.
 
@@ -347,11 +347,11 @@ The largest improvement came from identifying a specific failure mode — omitte
 
 ### 4. Synthetic upper bounds and deployable systems must be separated
 
-Several offline transformations achieved higher scores than the final system, but required operations that the constrained generator could not reliably perform.
+Several offline transformations achieved higher synthetic scores than the final system but required operations that the constrained generator could not reliably perform.
 
 Deployment reliability was therefore treated as part of model quality rather than as a separate engineering concern.
 
-### 5. A simpler final architecture generalized better
+### 5. The final architecture favored simplicity and deployment reliability
 
 Although development explored increasingly structured representations, the final system returned to a relatively simple design:
 
@@ -359,16 +359,17 @@ Although development explored increasingly structured representations, the final
 - add only the information channel that addressed the identified comprehension bottleneck, and
 - avoid additional formatting tasks that increased generator failure risk.
 
+The organizer-held-out results subsequently showed that this frozen system maintained performance close to the final development benchmark.
+
 ---
 
 ## Reproducibility Notes
 
-The repository contains the author's final configuration and methodological analysis.
+The repository contains the author's final submitted configuration and methodological analysis.
 
 The public repository intentionally focuses on:
 
-- the final submitted configuration,
-- validation and diagnostic code written for the project, and
+- the final submitted configuration, and
 - the methodology and ablation history.
 
 Competition test cases are not included.
@@ -380,6 +381,8 @@ configs/final_submission.yaml
 ```
 
 The repository is intended to document the reasoning, validation strategy, and system design rather than redistribute the full competition environment.
+
+Synthetic-screen results reported above are explicitly distinguished from real-generator validation and organizer-held-out evaluation.
 
 ---
 
@@ -393,8 +396,8 @@ Quantization:        4-bit
 Decoding:            deterministic
 Few-shot examples:   2
 Model attributions:  top 5
-Explanation:         verdict + calibrated probability + confidence +
+Explanation:         verdict + model probability + confidence +
                      five attributed drivers + compact explicit-absence channel
 ```
 
-The final system achieved a **0.8091 composite score on organizer-held-out test data**, with **0.9988 grounding**, **0.9673 attribution faithfulness**, **0.8195 comprehension**, and **0.6248 sensitivity**.
+The final system achieved a **0.8091 composite score on organizer-held-out test data**, with **0.9988 grounding**, **0.9673 attribution faithfulness**, **0.8195 comprehension**, **0.6248 sensitivity**, and **0.9850 coverage**.
