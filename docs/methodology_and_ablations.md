@@ -309,9 +309,7 @@ The official result was:
 | Sensitivity | 0.6248 |
 | Coverage | 0.9850 |
 
-The submission ranked **12th among 33 valid entries**.
-
-The most informative result was not the rank alone, but the consistency between development and organizer-held-out performance.
+The most informative aspect of the held-out evaluation was the consistency between development and organizer-held-out performance.
 
 | Metric | Final development run | Held-out test |
 |---|---:|---:|

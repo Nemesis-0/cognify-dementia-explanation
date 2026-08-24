@@ -193,37 +193,6 @@ The architecture was then frozen for final submission.
 
 ---
 
-## Organizer-Held-Out Test Result
-
-The frozen system was subsequently evaluated by the competition organizers on held-out test cases that were not used for model or representation selection.
-
-| Metric | Organizer-held-out test |
-|---|---:|
-| **Composite** | **0.8091** |
-| Grounding | **0.9988** |
-| Faithfulness | **0.9673** |
-| Comprehension | **0.8195** |
-| Sensitivity | **0.6248** |
-| Coverage | **0.9850** |
-
-The submission ranked **12th among 33 valid entries**.
-
-The similarity between the final development benchmark and organizer-held-out evaluation was particularly informative:
-
-| Metric | Development | Held-out test |
-|---|---:|---:|
-| Grounding | 1.000 | 0.999 |
-| Faithfulness | 0.976 | 0.967 |
-| Comprehension | 0.844 | 0.820 |
-| Sensitivity | 0.624 | 0.625 |
-| Composite | 0.826 | 0.809 |
-
-Grounding, faithfulness, and sensitivity remained close to their development values, while comprehension showed a moderate decline.
-
-The relatively small overall shift provided external evidence that the selected representation was not narrowly specific to the development benchmark.
-
----
-
 ## Base-Model Stress Test
 
 A late-stage model comparison tested **Qwen3-8B** using the same frozen explanation architecture.
@@ -245,6 +214,35 @@ This reinforced an important lesson:
 > **Greater general language-model capability does not necessarily imply better performance on a constrained evidence-transmission task.**
 
 For this application, predictable extraction and conservative evidence handling were more important than additional generative flexibility.
+
+---
+
+## Organizer-Held-Out Test Result
+
+The frozen system was subsequently evaluated by the competition organizers on held-out test cases that were not used for model or representation selection.
+
+| Metric | Organizer-held-out test |
+|---|---:|
+| **Composite** | **0.8091** |
+| Grounding | **0.9988** |
+| Faithfulness | **0.9673** |
+| Comprehension | **0.8195** |
+| Sensitivity | **0.6248** |
+| Coverage | **0.9850** |
+
+The similarity between the final development benchmark and organizer-held-out evaluation was particularly informative:
+
+| Metric | Development | Held-out test |
+|---|---:|---:|
+| Grounding | 1.000 | 0.999 |
+| Faithfulness | 0.976 | 0.967 |
+| Comprehension | 0.844 | 0.820 |
+| Sensitivity | 0.624 | 0.625 |
+| Composite | 0.826 | 0.809 |
+
+Grounding, faithfulness, and sensitivity remained close to their development values, while comprehension showed a moderate decline.
+
+The relatively small overall shift provided external evidence that the selected representation was not narrowly specific to the development benchmark.
 
 ---
 
