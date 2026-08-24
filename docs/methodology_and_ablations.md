@@ -40,19 +40,19 @@ The task therefore required more than producing fluent clinical prose. A useful 
 
 The official evaluation combined four complementary criteria:
 
-\[
-\text{Composite}
+$$
+\mathrm{Composite}
 =
-\text{Grounding}
+\mathrm{Grounding}
 \times
 \left(
-0.20\,\text{Faithfulness}
+0.20 \cdot \mathrm{Faithfulness}
 +
-0.60\,\text{Comprehension}
+0.60 \cdot \mathrm{Comprehension}
 +
-0.20\,\text{Sensitivity}
-\right).
-\]
+0.20 \cdot \mathrm{Sensitivity}
+\right)
+$$
 
 Each component measured a different failure mode:
 
