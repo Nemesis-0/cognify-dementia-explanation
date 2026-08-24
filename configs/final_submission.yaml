@@ -1,0 +1,51 @@
+schema_version: 1
+team: MiaoScope
+model:
+  id: Qwen/Qwen2.5-7B-Instruct
+  load_4bit: true
+  dtype: auto
+sampling:
+  temperature: 0
+  top_p: 1
+  max_new_tokens: 600
+prompt:
+  n_attributions: 5
+  question: 'Explain only the model''s reasoning, not a diagnosis. The drivers array must copy exactly rows 1-5 of MODEL ATTRIBUTIONS: the same five fields, in the same order, with the same directions. Never replace a row with another field. CITABLE FIELDS affects only the value: use the exact CITABLE FIELDS value when present, otherwise null. In the note, state verdict, calibrated dementia probability, confidence band, and explain those same five drivers in order. If a top-five field is absent from CITABLE FIELDS, say the record does not establish that finding and do not quote its attribution value. Follow attribution directions exactly and add no medical interpretation. In the note, use these exact names whenever these fields appear among the five drivers: med_NACCADEP = antidepressant; med_NACCEMD = oestrogen. Do not substitute another medication class. In the fifth driver explanation, after stating that driver''s direction and before that sentence''s final period, append exactly '';
+    Absent:''. After ''Absent:'' output one single no-space mega-token made directly from the PATIENT RECORD. Include every human-readable finding explicitly listed as reported absent and every patient-record item explicitly shown with numeric value 0. Do not infer absence from missing information. Lowercase each included finding, remove commas, replace spaces inside each finding with hyphens, and join findings with ''--''. Output ''none'' only if the record explicitly contains no absent or zero finding. Do not start a new sentence for Absent. This Absent payload is note-only: the drivers array must still copy rows 1-5 of MODEL ATTRIBUTIONS exactly, preserving field capitalization and underscores. Never change, add, remove, reorder, or rename drivers because of Absent. Keep the whole note under 200 words.'
+examples:
+- case_id: C0001
+  note: The model concluded dementia with calibrated probability 0.2741 and moderate_dementia confidence. MoCA total score (bat_MOCATOTS=20) was the strongest driver and increased risk. Vitamin B12 deficiency (his_B12DEF) also increased risk, but the record does not establish that finding. Thyroid disease (his_THYROID) decreased risk, but the record does not establish that finding. Sleep apnoea (his_APNEA) increased risk, but the record does not establish that finding. No antidepressant use (med_NACCADEP=0) decreased risk; Absent:smoked-at-least-100-cigarettes--years-smoked--heart-attack--atrial-fibrillation--angioplasty--cardiac-bypass--angina--other-cardiovascular-disease--stroke--parkinson's-disease--traumatic-brain-injury--diabetes--insomnia--depression-in-the-last-two-years--depression-other--anxiety--neurodevelopmental-disorder--anxiolytic--anticoagulant--ace-inhibitor--antidepressant--antihypertensive--angiotensin-ii-inhibitor--antipsychotic--beta-blocker--calcium-channel-blocker--diuretic--oestrogen--lipid-lowering--nsaid--vasodilator.
+  drivers:
+  - field: bat_MOCATOTS
+    value: 20
+    direction: increases risk
+  - field: his_B12DEF
+    value: null
+    direction: increases risk
+  - field: his_THYROID
+    value: null
+    direction: decreases risk
+  - field: his_APNEA
+    value: null
+    direction: increases risk
+  - field: med_NACCADEP
+    value: 0
+    direction: decreases risk
+- case_id: C0022
+  note: The model concluded no dementia with calibrated probability 0.0135 and high_not_dementia confidence. MoCA total score (bat_MOCATOTS=26) decreased risk. Age (his_NACCAGE=62) increased risk. his_APNEA increased risk, but the record does not establish that field. his_RBD increased risk, but the record does not establish that field. No antidepressant use (med_NACCADEP=0) decreased risk; Absent:smoked-at-least-100-cigarettes--years-smoked--heart-attack--atrial-fibrillation--angioplasty--cardiac-bypass--angina--other-cardiovascular-disease--stroke--parkinson's-disease--traumatic-brain-injury--diabetes--hypercholesterolaemia--insomnia--depression-in-the-last-two-years--depression-other--anxiety--neurodevelopmental-disorder--anxiolytic--anticoagulant--ace-inhibitor--antidepressant--angiotensin-ii-inhibitor--antipsychotic--beta-blocker--calcium-channel-blocker--diuretic--oestrogen--lipid-lowering--nsaid--vasodilator.
+  drivers:
+  - field: bat_MOCATOTS
+    value: 26
+    direction: decreases risk
+  - field: his_NACCAGE
+    value: 62
+    direction: increases risk
+  - field: his_APNEA
+    value: null
+    direction: increases risk
+  - field: his_RBD
+    value: null
+    direction: increases risk
+  - field: med_NACCADEP
+    value: 0
+    direction: decreases risk
