@@ -350,7 +350,7 @@ The project should be interpreted as a study in:
 ## Author
 
 **Miao Chen**  
-B.S. Statistics, Minor in Data Science  
+B.S. Statistics, Minor in Mathematics  
 University of Illinois Urbana-Champaign
 
 Solo team: **MiaoScope**
