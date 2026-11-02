@@ -280,37 +280,34 @@ The organizer-held-out evaluation subsequently showed performance close to the f
 
 ```text
 cognify-dementia-explanation/
-│
 ├── README.md
-│
 ├── configs/
 │   └── final_submission.yaml
-│
-└── docs/
-    └── methodology_and_ablations.md
+├── docs/
+│   ├── methodology_and_ablations.md
+│   └── analysis_code.md
+└── experiments/
+    └── analysis/
+        ├── comprehension_coverage.py
+        ├── absence_compression.py
+        ├── absence_architecture_probe.py
+        └── absence_official_frontier_dedup.py
 ```
 
-### `configs/final_submission.yaml`
-
-The final Qwen2.5-7B configuration submitted to the competition, including inference settings, prompt instructions, and few-shot examples.
-
-### `docs/methodology_and_ablations.md`
-
-A detailed account of the validation strategy, failure analysis, intermediate representations, deployment constraints, ablations, base-model challenge, and organizer-held-out evaluation.
+- [`configs/final_submission.yaml`](configs/final_submission.yaml): the original, byte-preserved final Qwen2.5-7B submission configuration, with inference settings, prompt instructions, and few-shot examples.
+- [`docs/methodology_and_ablations.md`](docs/methodology_and_ablations.md): development design, failure analysis, ablations, final generator validation, and organizer-held-out results.
+- [`experiments/analysis/`](experiments/analysis/): four **original historical DEV-analysis scripts** for structural comprehension coverage, absent/present/unresolved field counts, and exploratory representation trade-offs.
+- [`docs/analysis_code.md`](docs/analysis_code.md): script-by-script provenance, input requirements, run instructions, and scientific limitations.
 
 ---
 
 ## Reproducibility and Data Availability
 
-This repository is intended to document the **system design, validation methodology, final configuration, and major development findings** of the project.
+The four analysis scripts are preserved as historical research artifacts, **not** presented as an end-to-end final inference pipeline. They read organizer-provided **development** cohort and question JSON files under `experiments/devkit/cases/`; those inputs are **not distributed** here. The unchanged official organizer harness, full GPU execution environment, and competition test cases are also not redistributed.
 
-Competition test cases are not included.
+The analysis scripts use structural-coverage heuristics, baseline-informed comprehension proxies, and lexical-sensitivity proxies where explicitly labeled. They do **not** independently reproduce the official held-out composite or the real-generator 50-case result; those results are reported separately from organizer-side evaluation and frozen development generation, respectively.
 
-The repository does not attempt to redistribute the complete organizer-provided evaluation environment. Instead, it focuses on the components authored and selected during development.
-
-Synthetic-screen results are explicitly distinguished from real-generator development results and organizer-held-out evaluation.
-
-The reported held-out metrics are the results returned by the competition's organizer-side evaluation.
+See [analysis code and provenance](docs/analysis_code.md) for the original script hashes, assumptions, and the command-line entry points available **only when authorized development inputs are provided separately**. No private dataset or held-out test records are needed to browse this repository.
 
 ---
 
@@ -350,7 +347,8 @@ The project should be interpreted as a study in:
 ## Author
 
 **Miao Chen**  
-B.S. Statistics, Minor in Data Science  
+B.S. Statistics, Minor in Mathematics
+
 University of Illinois Urbana-Champaign
 
 Solo team: **MiaoScope**

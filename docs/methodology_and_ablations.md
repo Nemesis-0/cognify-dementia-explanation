@@ -363,24 +363,13 @@ The organizer-held-out results subsequently showed that this frozen system maint
 
 ## Reproducibility Notes
 
-The repository contains the author's final submitted configuration and methodological analysis.
+The repository contains the author's exact final submitted configuration, this methodology, and four byte-preserved **historical DEV-analysis scripts** in [`experiments/analysis/`](../experiments/analysis/). Their individual provenance and usage constraints are documented in [`analysis_code.md`](analysis_code.md).
 
-The public repository intentionally focuses on:
+The scripts support parts of the research workflow rather than the complete submission pipeline: they analyze whether facts were structurally carried by a top-five explanation, count observed/absent/unresolved fields, and explore proxy trade-offs among note representations. Some probes use development answer keys and question baselines to rank field candidates **in-sample**; such scripts are exploratory, not independent or held-out validation. Their comprehension and lexical-sensitivity proxies are not equivalent to measured reader-model scores or organizer evaluation.
 
-- the final submitted configuration, and
-- the methodology and ablation history.
+The scripts expect separately authorized organizer **development** inputs at `experiments/devkit/cases/cohort_dev.json` and `experiments/devkit/cases/questions_dev.json`, which are not published here. The official organizer harness, full execution environment, and competition test cases are also not redistributed. The final inference procedure is specified by [`configs/final_submission.yaml`](../configs/final_submission.yaml) and was executed using that separate organizer harness; it is not implemented by the four analysis scripts.
 
-Competition test cases are not included.
-
-The final configuration is available in:
-
-```text
-configs/final_submission.yaml
-```
-
-The repository is intended to document the reasoning, validation strategy, and system design rather than redistribute the full competition environment.
-
-Synthetic-screen results reported above are explicitly distinguished from real-generator validation and organizer-held-out evaluation.
+Accordingly, the public code does **not** independently reproduce the real-generator development composite or organizer-held-out composite. Synthetic-screen findings, real-generator development results, and organizer-held-out results remain separate evidence categories.
 
 ---
 

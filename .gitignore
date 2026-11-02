@@ -1,1 +1,18 @@
 .DS_Store
+.Rhistory
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Keep local competition datasets, experiment products, and private notes out of Git.
+/experiments/devkit/
+/experiments/package_*/
+/experiments/results/
+/experiments/*.zip
+/experiments/*.json
+/experiments/*.jsonl
+**/cohort_*.json
+**/questions_*.json
+**/cohort_*.jsonl
+**/questions_*.jsonl
+/docs/cognify-dementia-explanation.docx
